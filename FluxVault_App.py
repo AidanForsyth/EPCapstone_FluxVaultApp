@@ -94,22 +94,22 @@ def create_empty_plot(title):
 def update_plot_st(x_values, y_values, z_values, measured_x_values, measured_y_values, measured_z_values):
       
     fig_x = go.Figure()
-    fig_x.add_trace(go.Scatter(y=x_values, mode='lines', name='X Component'))
-    fig_x.add_trace(go.Scatter(y=measured_x_values, mode='lines', name='X2 Component'))
+    fig_x.add_trace(go.Scatter(y=x_values, mode='lines', name='X-Value Set Point'))
+    fig_x.add_trace(go.Scatter(y=measured_x_values, mode='lines', name='Measured Cage X-Value'))
     fig_x.update_layout(title='X Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_x.plotly_chart(fig_x, use_container_width=True)
 
     # Update the Y component plot and metric
     fig_y = go.Figure()
-    fig_y.add_trace(go.Scatter(y=y_values, mode='lines', name='Y Component'))
-    fig_y.add_trace(go.Scatter(y=measured_y_values, mode='lines', name='Y2 Component'))
+    fig_y.add_trace(go.Scatter(y=y_values, mode='lines', name='Y-Value Set Point'))
+    fig_y.add_trace(go.Scatter(y=measured_y_values, mode='lines', name='Measured Cage Y-Value'))
     fig_y.update_layout(title='Y Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_y.plotly_chart(fig_y, use_container_width=True)
 
     # Update the Z component plot and metric
     fig_z = go.Figure()
-    fig_z.add_trace(go.Scatter(y=z_values, mode='lines', name='Z Component'))
-    fig_z.add_trace(go.Scatter(y=measured_z_values, mode='lines', name='Z2 Component'))
+    fig_z.add_trace(go.Scatter(y=z_values, mode='lines', name='Z-Value Set Point'))
+    fig_z.add_trace(go.Scatter(y=measured_z_values, mode='lines', name='Measured Cage Z-Value'))
     fig_z.update_layout(title='Z Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_z.plotly_chart(fig_z, use_container_width=True)
 
@@ -196,7 +196,7 @@ selected_option = st.sidebar.selectbox("Go to", options, index=0)
 if home_clicked or selected_option == 'Home Page':
     st.title("Flux Vault Real-Time Overview")
     
-    # Home page content goes here
+    #region STK Input Widgets
     sma_col, ecc_col, inc_col = st.columns(3)
     with sma_col:
         sma = st.number_input("Semi-Major Axis", value = None, placeholder="Enter SMA...")
@@ -218,10 +218,12 @@ if home_clicked or selected_option == 'Home Page':
         
     with ta_col:
         ta = st.number_input("True Anomaly", value=None, placeholder="Enter TA...")
-        
+    
+    #endregion
+    
     # Create three columns
     mag_fieldbutton1, mag_fieldbutton_col, mag_fieldbutton3 = st.columns(3)
-
+    
     # Place the button in the middle column
     with mag_fieldbutton_col:
         mag_button_clicked = st.button('Generate Magnetic Field Set-points')
