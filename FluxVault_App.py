@@ -88,7 +88,8 @@ def receive_data(ser):
 def create_empty_plot(title):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[], y=[]))
-    fig.update_layout(title=title, xaxis=dict(title='Time'), yaxis=dict(title='Value'), margin=dict(l=20, r=20, t=40, b=20))
+    fig.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=40, b=20))
+    # fig.update_xaxes(title_text="xaxis 1 title", row=1, col=1)
     return fig
 
 def update_plot_st(x_values, y_values, z_values, measured_x_values, measured_y_values, measured_z_values):
@@ -96,21 +97,21 @@ def update_plot_st(x_values, y_values, z_values, measured_x_values, measured_y_v
     fig_x = go.Figure()
     fig_x.add_trace(go.Scatter(y=x_values, mode='lines', name='X-Value Set Point'))
     fig_x.add_trace(go.Scatter(y=measured_x_values, mode='lines', name='Measured Cage X-Value'))
-    fig_x.update_layout(title='X Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_x.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_x.plotly_chart(fig_x, use_container_width=True)
 
     # Update the Y component plot and metric
     fig_y = go.Figure()
     fig_y.add_trace(go.Scatter(y=y_values, mode='lines', name='Y-Value Set Point'))
     fig_y.add_trace(go.Scatter(y=measured_y_values, mode='lines', name='Measured Cage Y-Value'))
-    fig_y.update_layout(title='Y Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_y.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_y.plotly_chart(fig_y, use_container_width=True)
 
     # Update the Z component plot and metric
     fig_z = go.Figure()
     fig_z.add_trace(go.Scatter(y=z_values, mode='lines', name='Z-Value Set Point'))
     fig_z.add_trace(go.Scatter(y=measured_z_values, mode='lines', name='Measured Cage Z-Value'))
-    fig_z.update_layout(title='Z Component', margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_z.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
     plot_z.plotly_chart(fig_z, use_container_width=True)
 
 def run_serial(df):
@@ -167,6 +168,49 @@ def run_serial(df):
 
             time.sleep(1)  # Adjust the delay as needed
 
+    except KeyboardInterrupt:
+        st.write("Stopped by User")
+    finally:
+        ser.close()
+
+def run_serial_demo2():
+    # Serial port setup
+    serial_port = 'COM7'  
+    ser = serial.Serial(serial_port, 115200, timeout=1)
+    
+    # Identifiers 
+    x_flag = b'\x00'
+    y_flag = b'\x01'
+    z_flag = b'\x02'
+    
+    measured_x_values, measured_y_values, measured_z_values = [], [], []
+    
+    try:
+        while True: 
+             # Receive the data
+            id, data = receive_data(ser)
+            if id is not None:
+                if id == x_flag:
+                    # x_values.append(echoed_data)
+                    measured_x_values.append(data)
+                elif id == y_flag:
+                    # y_values.append(echoed_data)
+                    measured_y_values.append(data)
+                elif id == z_flag:
+                    # z_values.append(echoed_data)
+                    measured_z_values.append(data)
+            else:
+                st.write('Invalid or incomplete data received')
+        
+            # Update the metrics on the dashboard with the latest values
+            x_metric.metric(label="X-Component (Gauss)", value=measured_x_values[-1] if measured_x_values else 0, delta=0)
+            y_metric.metric(label="Y-Component (Gauss)", value=measured_y_values[-1] if measured_y_values else 0, delta=0) 
+            z_metric.metric(label="Z-Component (Gauss)", value=measured_z_values[-1] if measured_z_values else 0, delta=0)
+            
+            update_plot_st(measured_x_values, measured_y_values, measured_z_values, measured_x_values, measured_y_values, measured_z_values)
+
+            time.sleep(1)  # Adjust the delay as needed
+            
     except KeyboardInterrupt:
         st.write("Stopped by User")
     finally:
@@ -248,6 +292,8 @@ elif selected_option == 'Flux Vault Comms & Data Viewer':
     
     comms_container = st.empty()
     
+    read_container = st.empty()
+    
     st.header('Magnetic Field Set-Points', divider='rainbow')
     
     # Initialize the metrics in a container
@@ -272,6 +318,9 @@ elif selected_option == 'Flux Vault Comms & Data Viewer':
 
     if comms_container.button('Start Communication'):
         run_serial(st.session_state.mag_field_comp)
+        
+    if read_container.button('Receive Data'):
+        run_serial_demo2()
     
 elif selected_option == 'Flux Vault Team':
     st.title("Flux Vault Team")
