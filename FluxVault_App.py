@@ -96,22 +96,22 @@ def update_plot_st(x_values, y_values, z_values, measured_x_values, measured_y_v
       
     fig_x = go.Figure()
     fig_x.add_trace(go.Scatter(y=x_values, mode='lines', name='X-Value Set Point'))
-    fig_x.add_trace(go.Scatter(y=measured_x_values, mode='lines', name='Measured Cage X-Value'))
-    fig_x.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_x.add_trace(go.Scatter(y=measured_x_values, mode='markers', name='Measured Cage X-Value'))
+    fig_x.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
     plot_x.plotly_chart(fig_x, use_container_width=True)
 
     # Update the Y component plot and metric
     fig_y = go.Figure()
     fig_y.add_trace(go.Scatter(y=y_values, mode='lines', name='Y-Value Set Point'))
     fig_y.add_trace(go.Scatter(y=measured_y_values, mode='lines', name='Measured Cage Y-Value'))
-    fig_y.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_y.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
     plot_y.plotly_chart(fig_y, use_container_width=True)
 
     # Update the Z component plot and metric
     fig_z = go.Figure()
     fig_z.add_trace(go.Scatter(y=z_values, mode='lines', name='Z-Value Set Point'))
     fig_z.add_trace(go.Scatter(y=measured_z_values, mode='lines', name='Measured Cage Z-Value'))
-    fig_z.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=True)
+    fig_z.update_layout(xaxis=dict(title='Time'), yaxis=dict(title='Magnetic Field (uT)'), margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
     plot_z.plotly_chart(fig_z, use_container_width=True)
 
 def run_serial(df):
@@ -177,6 +177,7 @@ def run_serial_demo2():
     # Serial port setup
     serial_port = 'COM7'  
     ser = serial.Serial(serial_port, 115200, timeout=1)
+    ser.flush()
     
     # Identifiers 
     x_flag = b'\x00'
@@ -187,6 +188,10 @@ def run_serial_demo2():
     
     try:
         while True: 
+            
+            if len(measured_x_values) >= 100:
+                measured_x_values, measured_y_values, measured_z_values = [], [], []
+            
              # Receive the data
             id, data = receive_data(ser)
             if id is not None:
@@ -203,13 +208,13 @@ def run_serial_demo2():
                 st.write('Invalid or incomplete data received')
         
             # Update the metrics on the dashboard with the latest values
-            x_metric.metric(label="X-Component (Gauss)", value=measured_x_values[-1] if measured_x_values else 0, delta=0)
-            y_metric.metric(label="Y-Component (Gauss)", value=measured_y_values[-1] if measured_y_values else 0, delta=0) 
-            z_metric.metric(label="Z-Component (Gauss)", value=measured_z_values[-1] if measured_z_values else 0, delta=0)
+            x_metric.metric(label="X-Component (uT)", value=measured_x_values[-1] if measured_x_values else 0, delta=0)
+            y_metric.metric(label="Y-Component (uT)", value=measured_y_values[-1] if measured_y_values else 0, delta=0) 
+            z_metric.metric(label="Z-Component (uT)", value=measured_z_values[-1] if measured_z_values else 0, delta=0)
             
             update_plot_st(measured_x_values, measured_y_values, measured_z_values, measured_x_values, measured_y_values, measured_z_values)
 
-            time.sleep(1)  # Adjust the delay as needed
+            time.sleep(0.1)  # Adjust the delay as needed
             
     except KeyboardInterrupt:
         st.write("Stopped by User")
@@ -299,9 +304,9 @@ elif selected_option == 'Flux Vault Comms & Data Viewer':
     # Initialize the metrics in a container
     metrics_container = st.container()
     col1, col2, col3 = metrics_container.columns(3)
-    x_metric = col1.metric(label="X-Component (Gauss)", value=0, delta=10)
-    y_metric = col2.metric(label="Y-Component (Gauss)", value=0, delta=-10)
-    z_metric = col3.metric(label="Z-Component (Gauss)", value=0, delta=10)
+    x_metric = col1.metric(label="X-Component (uT)", value=0, delta=10)
+    y_metric = col2.metric(label="Y-Component (uT)", value=0, delta=-10)
+    z_metric = col3.metric(label="Z-Component (uT)", value=0, delta=10)
                
     st.header('Magnetic Field Profiles', divider='rainbow')
                     
